@@ -492,6 +492,56 @@ def evaluate(ast, environment):
                 return condition_value, "exit"
         return None, None  # Normal loop termination (condition false or break occurred)
 
+
+
+
+    if ast["tag"] == "for":
+    
+        init_value, init_status = evaluate(ast["init"], environment)
+        if init_status == "exit":
+            return init_value, "exit"
+
+        condition_value, cond_status = evaluate(ast["condition"], environment)
+        if cond_status == "exit":
+            return condition_value, "exit"
+
+        while is_truthy(condition_value):
+            val, body_status = evaluate(ast["do"], environment)
+
+            if body_status == "return" or body_status == "exit":
+                return val, body_status
+
+            if body_status == "break":
+                break
+
+            if body_status == "continue":
+                update_value, update_status = evaluate(ast["update"], environment)
+                if update_status == "exit":
+                    return update_value, "exit"
+
+                condition_value, cond_status = evaluate(ast["condition"], environment)
+                if cond_status == "exit":
+                    return condition_value, "exit"
+                continue
+
+            
+            update_value, update_status = evaluate(ast["update"], environment)
+            if update_status == "exit":
+                return update_value, "exit"
+
+            
+            condition_value, cond_status = evaluate(ast["condition"], environment)
+            if cond_status == "exit":
+                return condition_value, "exit"
+
+        return None, None
+
+
+
+
+
+
+
     if ast["tag"] == "statement_list":
         last_value = None
         for statement in ast["statements"]:
@@ -798,6 +848,29 @@ def test_evaluate_while_statement():
     equals("while(0) {x=1}", {}, None, {})
     equals("x=1; while(x<5) {x=x+1}; y=3", {}, 3, {"x": 5, "y": 3})
 
+def test_evaluate_for_statement():
+    print("testing evaluate_for_statement")
+
+    equals(
+        "sum = 0; for(i = 0; i < 5; i = i + 1) { sum = sum + i }; sum",
+        {},
+        10,
+        {"sum": 10, "i": 5},
+    )
+
+    equals(
+        "x = 0; for(i = 0; i < 3; i = i + 1) { x = x + 2 }; x",
+        {},
+        6,
+        {"x": 6, "i": 3},
+    )
+
+    equals(
+        "x = 0; for(i = 0; i < 5; i = i + 1) { if(i == 3) { break }; x = x + 1 }; x",
+        {},
+        3,
+        {"x": 3, "i": 3},
+    )
 
 def test_evaluate_assignment_statement():
     print("test evaluate_assignment_statement")
@@ -1248,4 +1321,5 @@ if __name__ == "__main__":
     test_scoping()
     test_closures()
     test_control_flow_scoping_rules()
+    test_evaluate_for_statement()
     print("done.")

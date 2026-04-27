@@ -1199,6 +1199,36 @@ def test_parse_while_statement():
         },
     }
 
+def parse_for_statement(tokens):
+
+    assert tokens[0]["tag"] == "for"
+    tokens = tokens[1:]
+
+    assert tokens[0]["tag"] == "(", "Expected '(' after for"
+    tokens = tokens[1:]
+
+    init, tokens = parse_expression(tokens)
+    assert tokens[0]["tag"] == ";", "Expected ';' after init"
+    tokens = tokens[1:]
+
+    condition, tokens = parse_expression(tokens)
+    assert tokens[0]["tag"] == ";", "Expected ';' after condition"
+    tokens = tokens[1:]
+
+    update, tokens = parse_expression(tokens)
+    assert tokens[0]["tag"] == ")", "Expected ')' after update"
+    tokens = tokens[1:]
+
+    body, tokens = parse_statement_list(tokens)
+
+    return {
+        "tag": "for",
+        "init": init,
+        "condition": condition,
+        "update": update,
+        "do": body,
+    }, tokens
+
 
 def parse_return_statement(tokens):
     """
@@ -1413,6 +1443,8 @@ def parse_statement(tokens):
         return parse_if_statement(tokens)
     if tag == "while":
         return parse_while_statement(tokens)
+    if tag == "for":
+        return parse_for_statement(tokens)
     if tag == "function":
         return parse_function_statement(tokens)
     if tag == "return":
